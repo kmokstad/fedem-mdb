@@ -134,29 +134,50 @@ bool FmTriad::highlight(bool trueOrFalse)
   If \a ownerPart is NULL, we do nothing unless the connector type is changed.
 */
 
-bool FmTriad::updateConnector(ConnectorType type, FmPart* ownerPart)
+bool FmTriad::updateConnector(ConnectorType type, FmPart* ownerPart,
+                              FFlNode* existingNode)
 {
   FmPart* owner = ownerPart ? ownerPart : this->getOwnerFEPart();
   if (!owner) return false;
 
+  ConnectorType oldType = itsConnectorType.getValue();
   bool changed = itsConnectorType.setValue(type);
   if (!changed && !ownerPart) return false;
 
   FFlLinkHandler* FEdata = owner->getLinkHandler();
   if (!FEdata) return changed;
 
-  FFlConnectorItems& items = itsConnectorItems.getValue();
-  if (!items.empty())
-    changed |= (FEdata->deleteConnectorElements(items.getElements()) +
-                FEdata->deleteConnectorNodes(items.getNodes()) +
-                FEdata->deleteConnectorProperties(items.getProperties()) > 0);
-
-  if (type > NONE)
-    changed |= (FEdata->createConnector(itsConnectorGeometry.getValue(),
-                                        this->getTranslation(),type,items) > 0);
+  FFlConnectorItems newItems;
+  const FFlConnectorItems& oldItems = itsConnectorItems.getValue();
+  if (type == NONE)
+    FEdata->deleteConnector(oldItems);
+  else if (!existingNode)
+    FEdata->createConnector(itsConnectorGeometry.getValue(),
+                            this->getTranslation(),type,newItems);
   else
-    items.clear();
+  {
+    int newType = FEdata->checkConnector(existingNode,newItems);
+    if (newType == NONE)
+      FEdata->createConnector(itsConnectorGeometry.getValue(),
+                              this->getTranslation(),type,newItems);
+    else
+    {
+      ListUI <<" --> Using existing connector for FE node "<< existingNode->getID();
+      if (newType == oldType)
+      {
+        itsConnectorType.setValue((ConnectorType)newType);
+	changed = false;
+      }
+      else if (newType != type)
+      {
+        ListUI <<"\n     but changing its type to "<< newType;
+        changed = itsConnectorType.setValue((ConnectorType)newType);
+      }
+      ListUI <<"\n";
+    }
+  }
 
+  changed |= itsConnectorItems.setValue(newItems);
   if (changed && !ownerPart)
     owner->delayedCheckSumUpdate();
 
@@ -816,7 +837,19 @@ int FmTriad::syncOnFEmodel()
     if (node->isSlaveNode())
       node = NULL;
     else if (haveGeometry && FENodeNo.getValue() != node->getID())
-      node = NULL;
+    {
+      if (!FFaMsg::dialog(this->getIdString() + " was connected to FE node " +
+                          std::to_string(FENodeNo.getValue()) +
+                          "\nbut now matches the node " +
+                          std::to_string(node->getID()) + " in the new FE model"
+                          "\nDo you want to connect to this node instead?",
+                          FFaMsg::YES_NO))
+        node = NULL;
+#ifdef FT_USE_CONNECTORS
+      else if (this->updateConnector(itsConnectorType.getValue(),owner,node))
+        owner->delayedCheckSumUpdate();
+#endif
+    }
   }
   if (!node && haveGeometry)
   {

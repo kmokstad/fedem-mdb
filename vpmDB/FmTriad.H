@@ -208,7 +208,8 @@ public:
   };
 
 #ifdef FT_USE_CONNECTORS
-  bool updateConnector(ConnectorType type, FmPart* ownerPart = NULL);
+  bool updateConnector(ConnectorType type, FmPart* ownerPart = NULL,
+                       FFlNode* node = NULL);
 #endif
 
   typedef std::vector<FmHasDOFsBase::DOFStatusEnum> DOFStatusVec;
