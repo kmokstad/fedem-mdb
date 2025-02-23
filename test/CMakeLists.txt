@@ -55,6 +55,9 @@ endif ( USE_CONNECTORS )
 
 
 # Add some unit tests using gtest (executed via ctest)
+add_executable (test_FFa test_FFaContainers.C )
+add_cpp_test ( test_FFa FFaContainers )
+
 add_executable ( test_FmPart test_FmPart.C )
 add_cpp_test ( test_FmPart vpmDB )
 
