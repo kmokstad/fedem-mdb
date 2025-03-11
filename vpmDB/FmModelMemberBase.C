@@ -43,7 +43,9 @@ FmModelMemberBase::FmModelMemberBase(bool isDummy) : FmBase(isDummy)
 
 FFaSwitchBoardConnector* FmModelMemberBase::getSignalConnector()
 {
-  return FmSignalConnector::instance();
+  FFaSwitchBoardConnector* connector = FmSignalConnector::instance();
+  if (connector->noLabel()) connector->setLabel("FmModelMemberBase");
+  return connector;
 }
 
 
