@@ -23,15 +23,33 @@ jobs:
       - name: Install googletest
         uses: Bacondish2023/setup-googletest@v1
 
-      - name: Silence some advice and hint
+      - name: Silence some advice and hint and set environment variables
         run: |
           git config --global advice.detachedHead false
           git config --global init.defaultBranch main
+          echo "FEDEM_SOLVER=${{ github.workspace }}/bin/libfedem_solver_core.so" >> $GITHUB_ENV
+          echo "TEST_DIR=${{ github.workspace }}/TimeDomain" >> $GITHUB_ENV
 
       - name: Check out source repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Download the latest FEDEM release
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: openfedem/fedem-solvers
+          fileName: 'fedem-*_linux64.tar.gz'
+          latest: true
+          extract: true
+
+      - name: Download the latest fedempy release
+        id: fedempy
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: openfedem/fedem-solvers
+          fileName: 'fedempy-*.tar.gz'
+          latest: true
 
       - name: Configure pFUnit-3
         run: >
@@ -41,6 +59,9 @@ jobs:
 
       - name: Build and install pFUnit-3
         run: cmake --build ./pFUnit3-build --target install
+
+      - name: Install the fedempy package
+        run: pip install ${{ fromJson(steps.fedempy.outputs.downloaded_files)[0] }}
 
       - name: Configure main build
         run: >
