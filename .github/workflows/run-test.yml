@@ -27,13 +27,21 @@ jobs:
         run: |
           git config --global advice.detachedHead false
           git config --global init.defaultBranch main
+          echo "LD_LIBRARY_PATH=${{ github.workspace }}/bin:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "FEDEM_REDUCER=${{ github.workspace }}/bin/libfedem_reducer_core.so" >> $GITHUB_ENV
           echo "FEDEM_SOLVER=${{ github.workspace }}/bin/libfedem_solver_core.so" >> $GITHUB_ENV
-          echo "TEST_DIR=${{ github.workspace }}/TimeDomain" >> $GITHUB_ENV
+          echo "TEST_DIR=${{ github.workspace }}/fedem-solver-tests/TimeDomain" >> $GITHUB_ENV
 
       - name: Check out source repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Check out the solver tests
+        uses: actions/checkout@v4
+        with:
+          repository: openfedem/fedem-solver-tests
+          sparse-checkout: TimeDomain
 
       - name: Download the latest FEDEM release
         uses: robinraju/release-downloader@v1
