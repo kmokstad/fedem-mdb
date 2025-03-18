@@ -42,6 +42,7 @@ jobs:
         with:
           repository: openfedem/fedem-solver-tests
           sparse-checkout: TimeDomain
+          clean: false
 
       - name: Download the latest FEDEM release
         uses: robinraju/release-downloader@v1
