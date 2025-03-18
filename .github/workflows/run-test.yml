@@ -24,7 +24,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: openfedem/fedem-solver-tests
-          sparse-checkout: TimeDomain
+          sparse-checkout: |
+            TimeDomain
+            InversePy
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -63,11 +65,6 @@ jobs:
       - name: Download solver test artifacts
         uses: actions/download-artifact@v4
 
-      - name: Check files
-        run: |
-          ls -l
-          ls -l solver-tests
-
       - name: Download the latest FEDEM release
         uses: robinraju/release-downloader@v1
         with:
@@ -84,14 +81,14 @@ jobs:
           fileName: 'fedempy-*.tar.gz'
           latest: true
 
-#      - name: Configure pFUnit-3
-#        run: >
-#          PFUNIT=./pFUnit3 cmake
-#          -B ./pFUnit3-build -S ./fedem-foundation/pFUnit/pFUnit-3.3.3
-#          -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./pFUnit3
+      - name: Configure pFUnit-3
+        run: >
+          PFUNIT=./pFUnit3 cmake
+          -B ./pFUnit3-build -S ./fedem-foundation/pFUnit/pFUnit-3.3.3
+          -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./pFUnit3
 
-#      - name: Build and install pFUnit-3
-#        run: cmake --build ./pFUnit3-build --target install
+      - name: Build and install pFUnit-3
+        run: cmake --build ./pFUnit3-build --target install
 
       - name: Install the fedempy package
         run: pip install ${{ fromJson(steps.fedempy.outputs.downloaded_files)[0] }} pyyaml
