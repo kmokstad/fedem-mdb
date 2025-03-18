@@ -40,7 +40,7 @@ jobs:
 
     needs: get-tests
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Install googletest
@@ -53,7 +53,7 @@ jobs:
           echo "LD_LIBRARY_PATH=${{ github.workspace }}/bin:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "FEDEM_REDUCER=${{ github.workspace }}/bin/libfedem_reducer_core.so" >> $GITHUB_ENV
           echo "FEDEM_SOLVER=${{ github.workspace }}/bin/libfedem_solver_core.so" >> $GITHUB_ENV
-          echo "TEST_DIR=${{ github.workspace }}/fedem-solver-tests/TimeDomain" >> $GITHUB_ENV
+          echo "TEST_DIR=${{ github.workspace }}/TimeDomain" >> $GITHUB_ENV
 
       - name: Check out source repository
         uses: actions/checkout@v4
