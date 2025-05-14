@@ -77,6 +77,7 @@ public:
   FFlNode* getNode(int nodeNo) const;
   int getNodePos(int nodeNo,
                  double* x = NULL, double* y = NULL, double* z = NULL) const;
+  bool getNodeConnectivity(int nodeNo, Strings& elements) const;
   FFlNode* getClosestNode(const FaVec3& point) const;
 
   int  getCompModesFlags(IntVec& BCcodes) const;

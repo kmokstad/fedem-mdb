@@ -1011,6 +1011,17 @@ int FmPart::getNodePos(int nodeNo, double* x, double* y, double* z) const
 }
 
 
+bool FmPart::getNodeConnectivity(int nodeNo, Strings& elements) const
+{
+  if (myFEData)
+    myFEData->getNodeConnectivity(nodeNo,elements);
+  else
+    elements.clear();
+
+  return !elements.empty();
+}
+
+
 FFlNode* FmPart::getClosestNode(const FaVec3& point) const
 {
   return myFEData ? myFEData->findClosestNode(point) : NULL;
