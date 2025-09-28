@@ -142,7 +142,8 @@ public:
   bool openFEData();
   bool saveFEData(bool forceSave = false);
   bool setVisualizationFile(const std::string& fileName, bool updateViz = true);
-  virtual bool writeToVTF(VTFAFile& file, IntVec* outputOrder, IntVec* fstOrdNodes);
+  virtual bool writeToVTF(VTFAFile& file,
+                          IntVec* outputOrder, IntVec* fstOrdNodes);
   bool hasOP2files() const;
   bool convertOP2files(const std::string& filePath);
   bool copyExternalFiles(const std::string& from, const std::string& to);
@@ -394,6 +395,7 @@ public:
   // Parameters related to stress recovery
 
   FFaField<int>         recoveryDuringSolve;
+  FFaField<bool>        ignoreInRecovery;
   FFaField<bool>        useExternalResFile;
   FFaField<std::string> externalResFileName;
 
