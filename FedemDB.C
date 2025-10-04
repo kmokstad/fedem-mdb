@@ -204,7 +204,8 @@ DLLexport(void) FmInit (const char* plugin1, const char* plugin2)
     FmUserDefinedElement::getClassTypeID()
   };
 
-  // Lambda function for loading plugin libraries (user-defined functions/elements)
+  // Lambda function for loading plugin libraries
+  // (user-defined functions and elements)
   auto&& loadPlugin = [](const std::string& plugin)
   {
     char signature[128];
@@ -536,7 +537,8 @@ DLLexport(void) FmSolveSetup (double tStart, double tInc, double tStop,
     std::string& my_opts = analy->solverAddOpts.getValue();
     if (my_opts.empty())
       analy->solverAddOpts.setValue(add_opts);
-    else if (my_opts.find(add_opts) == std::string::npos) // avoid adding same options multiple times
+    else if (my_opts.find(add_opts) == std::string::npos)
+      // avoid adding same options multiple times
       my_opts.append(std::string(" ") + std::string(add_opts));
   }
 }
@@ -579,7 +581,8 @@ DLLexport(bool) FmSolve (char* rdbDir, bool keepRes,
     if (FiUserElmPlugin::instance()->validate(plugin))
       udePlugin = plugin.c_str();
     else
-      ListUI <<"  ** Ignoring invalid user-defined element plugin: "<< plugin <<"\n";
+      ListUI <<"  ** Ignoring invalid user-defined element plugin: "
+             << plugin <<"\n";
   }
   if (!udfPlugin && !mech->activeFunctionPlugin.getValue().empty())
   {
@@ -587,7 +590,8 @@ DLLexport(bool) FmSolve (char* rdbDir, bool keepRes,
     if (FFaUserFuncPlugin::instance()->validate(plugin))
       udfPlugin = plugin.c_str();
     else
-      ListUI <<"  ** Ignoring invalid user-defined function plugin: "<< plugin <<"\n";
+      ListUI <<"  ** Ignoring invalid user-defined function plugin: "
+             << plugin <<"\n";
   }
 
   Strings plugins, rdbPath;
@@ -1416,20 +1420,13 @@ DLLexport(int) FmCreateStrainRosette (const char* description,
 
   ListUI <<"Creating Strain Rosette.\n";
   FmStrainRosette* rosette = new FmStrainRosette();
-  rosette->rosetteLink.setRef(part);
-  rosette->rosetteType.setValue(FmStrainRosette::SINGLE_GAGE);
-  rosette->numNodes.setValue(nnod);
-  rosette->node1.setValue(nodes[0]);
-  rosette->node2.setValue(nodes[1]);
-  rosette->node3.setValue(nodes[2]);
-  rosette->node4.setValue(nnod > 3 ? nodes[3] : 0);
-  rosette->angleOrigin.setValue(FmStrainRosette::LINK_VECTOR);
+  rosette->setTopology(part,IntVec(nodes,nodes+nnod));
   rosette->angleOriginVector.setValue(dir);
   rosette->angle.setValue(angle);
   rosette->removeStartStrains.setValue(startAtZero);
   rosette->connect();
 
-  if (rosette->syncWithFEModel().back())
+  if (rosette->syncWithFEModel(true).back())
   {
     ListUI <<" *** Error: Invalid node numbers ("<< nodes[0];
     for (int i = 1; i < nnod; i++) ListUI <<","<< nodes[i];
@@ -1474,7 +1471,8 @@ DLLexport(int) FmCreateAssembly (const char* description, int n, const int* id)
   std::vector<FmModelMemberBase*> members(n,NULL);
   for (int i = 0; i < n; i++)
     if (!FmFind(id[i],members[i]))
-      ListUI <<"  ** Warning: No object with base ID "<< id[i] <<" (ignored).\n";
+      ListUI <<"  ** Warning: No object with base ID "<< id[i]
+             <<" (ignored).\n";
 
   FmSubAssembly* subAss = Fedem::createSubAssembly(members);
   subAss->setUserDescription(description);
@@ -1614,7 +1612,8 @@ DLLexport(bool) FmConstrainObject (int id, int dof, int dofStatus)
     return false;
   }
 
-  if (dof == FmHasDOFsBase::Z_TRANS && object->isOfType(FmRevJoint::getClassTypeID()))
+  if (dof == FmHasDOFsBase::Z_TRANS &&
+      object->isOfType(FmRevJoint::getClassTypeID()))
     static_cast<FmRevJoint*>(object)->setHasTzDOF(true);
 
   if (dof < FmHasDOFsBase::MAX_DOF)
