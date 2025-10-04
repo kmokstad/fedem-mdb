@@ -70,6 +70,8 @@ public:
   virtual bool isGenericPart() const { return useGenericProperties.getValue(); }
   virtual bool isFEPart(bool loadedOnly = false) const;
 
+  FaMat34 getTransform() const;
+
   FmTriad* getTriadAtNode(int nodeNo) const;
   FFlNode* getNodeAtPoint(const FaVec3& point, double tolerance,
                           FFlConnectorItems* addItems = NULL);

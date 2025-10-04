@@ -490,6 +490,16 @@ bool FmPart::isAttachable() const
 }
 
 
+FaMat34 FmPart::getTransform() const
+{
+#ifdef USE_INVENTOR
+  if (itsDisplayPt)
+    return static_cast<FdPart*>(itsDisplayPt)->getActiveTransform();
+#endif
+  return FaMat34();
+}
+
+
 void FmPart::setLinkHandler(FFlLinkHandler* part, bool updateNnodes)
 {
   this->clearElemGroupProxies();
