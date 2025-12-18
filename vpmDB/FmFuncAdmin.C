@@ -6,102 +6,117 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <algorithm>
+#include <map>
 
 #include "FFaFunctionLib/FFaUserFuncPlugin.H"
 
 #include "vpmDB/FmAllFunctionHeaders.H"
 #include "vpmDB/FmFuncAdmin.H"
 
-FuncInfoMap FmFuncAdmin::itsFuncInfoTable;
-std::vector<int> FmFuncAdmin::allowableSprDmpFuncs;
 
-static int numClassTypes = 0;
-
-
-void FmFuncAdmin::init()
+namespace
 {
-  itsFuncInfoTable[NONE]                = FmFuncTypeInfo("   1:1");
+  std::map<int,FmFuncTypeInfo> itsFuncInfoTable;
 
-  itsFuncInfoTable[GENERAL_HEADING]     = FmFuncTypeInfo("-- General Functions --");
+  int numClassTypes = 0;
 
-  itsFuncInfoTable[LIN_VAR]             = FmFuncTypeInfo("    Poly line", FmfLinVar::getClassTypeID());
-  itsFuncInfoTable[DEVICE]              = FmFuncTypeInfo("    Poly line from file", FmfDeviceFunction::getClassTypeID());
-  itsFuncInfoTable[SPLINE]              = FmFuncTypeInfo("    Spline", FmfSpline::getClassTypeID());
-  itsFuncInfoTable[MATH_EXPRESSION]     = FmFuncTypeInfo("    Math expression", FmfMathExpr::getClassTypeID());
-
-  itsFuncInfoTable[SIMPLE_HEADING]      = FmFuncTypeInfo("-- Simple Functions --");
-
-  itsFuncInfoTable[CONSTANT]            = FmFuncTypeInfo("    Constant", FmfConstant::getClassTypeID());
-  itsFuncInfoTable[SCALE]               = FmFuncTypeInfo("    Linear", FmfScale::getClassTypeID());
-  itsFuncInfoTable[RAMP]                = FmFuncTypeInfo("    Ramp", FmfRamp::getClassTypeID());
-  itsFuncInfoTable[LIM_RAMP]            = FmFuncTypeInfo("    Limited ramp", FmfLimRamp::getClassTypeID());
-  itsFuncInfoTable[STEP]                = FmFuncTypeInfo("    Step", FmfStep::getClassTypeID());
-  itsFuncInfoTable[DIRAC_PULS]          = FmFuncTypeInfo("    Pulse", FmfDiracPuls::getClassTypeID());
-
-  itsFuncInfoTable[PERIODIC_HEADING]    = FmFuncTypeInfo("-- Periodic Functions --");
-
-  itsFuncInfoTable[SINUSOIDAL]          = FmFuncTypeInfo("    Sine", FmfSinusoidal::getClassTypeID());
-  itsFuncInfoTable[COMPL_SINUS]         = FmFuncTypeInfo("    Combined sine", FmfComplSinus::getClassTypeID());
-  itsFuncInfoTable[DELAYED_COMPL_SINUS] = FmFuncTypeInfo("    Delayed combined sine", FmfDelayedComplSinus::getClassTypeID());
-  itsFuncInfoTable[WAVE_SINUS]          = FmFuncTypeInfo("    Wave sine", FmfWaveSinus::getClassTypeID());
-  itsFuncInfoTable[WAVE_SPECTRUM]       = FmFuncTypeInfo("    JONSWAP sea wave spectrum", FmfWaveSpectrum::getClassTypeID());
-  itsFuncInfoTable[FILE_SPECTRUM]       = FmFuncTypeInfo("    User defined wave spectrum", FmfDeviceFunction::getClassTypeID());
-  itsFuncInfoTable[SQUARE_PULS]         = FmFuncTypeInfo("    Periodic square pulse", FmfSquarePuls::getClassTypeID());
-
-  itsFuncInfoTable[SPECIAL_HEADING]     = FmFuncTypeInfo("-- Special Functions --");
-
-  itsFuncInfoTable[SMOOTH_TRAJ]         = FmFuncTypeInfo("    Smooth trajectory", FmfSmoothTraj::getClassTypeID());
-  itsFuncInfoTable[LIN_VEL_VAR]         = FmFuncTypeInfo("    Linear derivative", FmfLinVelVar::getClassTypeID());
-  itsFuncInfoTable[EXTERNAL]            = FmFuncTypeInfo("    External function", FmfExternalFunction::getClassTypeID());
-  itsFuncInfoTable[REFERENCE]           = FmFuncTypeInfo("    Refer to other function");
-
-  const int maxUF = 400;
-  int funcId[maxUF];
-  int nUserFuncs = FFaUserFuncPlugin::instance()->getFuncs(maxUF,funcId);
-  if (nUserFuncs > 0)
+  void initFuncInfoTable()
   {
-    numClassTypes = FFaTypeCheck::getNewTypeID(NULL);
+    using namespace FmFuncAdmin;
 
-    std::string funcName(64,' ');
-    const char* fName = funcName.c_str()+4;
-    itsFuncInfoTable[USER_HEADING] = FmFuncTypeInfo("-- User-defined Functions --");
-    for (int i = 1; i <= nUserFuncs; i++)
-      if (FFaUserFuncPlugin::instance()->getFuncName(funcId[i-1],60,const_cast<char*>(fName)) > 0)
-	itsFuncInfoTable[USER_HEADING+i] = FmFuncTypeInfo(funcName,numClassTypes+funcId[i-1]);
+    itsFuncInfoTable[NONE] = "   1:1";
+
+    itsFuncInfoTable[GENERAL_HEADING] = "-- General Functions --";
+
+    itsFuncInfoTable[LIN_VAR]         = FmFuncTypeInfo("    Poly line", FmfLinVar::getClassTypeID());
+    itsFuncInfoTable[DEVICE]          = FmFuncTypeInfo("    Poly line from file", FmfDeviceFunction::getClassTypeID());
+    itsFuncInfoTable[SPLINE]          = FmFuncTypeInfo("    Spline", FmfSpline::getClassTypeID());
+    itsFuncInfoTable[MATH_EXPRESSION] = FmFuncTypeInfo("    Math expression", FmfMathExpr::getClassTypeID());
+
+    itsFuncInfoTable[SIMPLE_HEADING] = "-- Simple Functions --";
+
+    itsFuncInfoTable[CONSTANT]   = FmFuncTypeInfo("    Constant", FmfConstant::getClassTypeID());
+    itsFuncInfoTable[SCALE]      = FmFuncTypeInfo("    Linear", FmfScale::getClassTypeID());
+    itsFuncInfoTable[RAMP]       = FmFuncTypeInfo("    Ramp", FmfRamp::getClassTypeID());
+    itsFuncInfoTable[LIM_RAMP]   = FmFuncTypeInfo("    Limited ramp", FmfLimRamp::getClassTypeID());
+    itsFuncInfoTable[STEP]       = FmFuncTypeInfo("    Step", FmfStep::getClassTypeID());
+    itsFuncInfoTable[DIRAC_PULS] = FmFuncTypeInfo("    Pulse", FmfDiracPuls::getClassTypeID());
+
+    itsFuncInfoTable[PERIODIC_HEADING] = "-- Periodic Functions --";
+
+    itsFuncInfoTable[SINUSOIDAL]          = FmFuncTypeInfo("    Sine", FmfSinusoidal::getClassTypeID());
+    itsFuncInfoTable[COMPL_SINUS]         = FmFuncTypeInfo("    Combined sine", FmfComplSinus::getClassTypeID());
+    itsFuncInfoTable[DELAYED_COMPL_SINUS] = FmFuncTypeInfo("    Delayed combined sine", FmfDelayedComplSinus::getClassTypeID());
+    itsFuncInfoTable[WAVE_SINUS]          = FmFuncTypeInfo("    Wave sine", FmfWaveSinus::getClassTypeID());
+    itsFuncInfoTable[WAVE_SPECTRUM]       = FmFuncTypeInfo("    JONSWAP sea wave spectrum", FmfWaveSpectrum::getClassTypeID());
+    itsFuncInfoTable[FILE_SPECTRUM]       = FmFuncTypeInfo("    User defined wave spectrum", FmfDeviceFunction::getClassTypeID());
+    itsFuncInfoTable[SQUARE_PULS]         = FmFuncTypeInfo("    Periodic square pulse", FmfSquarePuls::getClassTypeID());
+
+    itsFuncInfoTable[SPECIAL_HEADING] = "-- Special Functions --";
+
+    itsFuncInfoTable[SMOOTH_TRAJ] = FmFuncTypeInfo("    Smooth trajectory", FmfSmoothTraj::getClassTypeID());
+    itsFuncInfoTable[LIN_VEL_VAR] = FmFuncTypeInfo("    Linear derivative", FmfLinVelVar::getClassTypeID());
+    itsFuncInfoTable[EXTERNAL]    = FmFuncTypeInfo("    External function", FmfExternalFunction::getClassTypeID());
+    itsFuncInfoTable[REFERENCE]   = FmFuncTypeInfo("    Refer to other function");
+
+    const int maxUF = 400;
+    int funcId[maxUF];
+    int nUserFuncs = FFaUserFuncPlugin::instance()->getFuncs(maxUF,funcId);
+    if (nUserFuncs > 0)
+    {
+      numClassTypes = FFaTypeCheck::getNewTypeID(NULL);
+
+      std::string funcName(64,' ');
+      const char* fName = funcName.c_str()+4;
+      itsFuncInfoTable[USER_HEADING] = "-- User-defined Functions --";
+      for (int i = 1; i <= nUserFuncs; i++)
+        if (FFaUserFuncPlugin::instance()->getFuncName(funcId[i-1],60,const_cast<char*>(fName)) > 0)
+          itsFuncInfoTable[USER_HEADING+i] = FmFuncTypeInfo(funcName.c_str(),numClassTypes+funcId[i-1]);
+    }
+
+    for (std::pair<const int,FmFuncTypeInfo>& funcInfo : itsFuncInfoTable)
+      funcInfo.second.funcMenuEnum = funcInfo.first;
+
+    itsFuncInfoTable[WAVE_SINUS].funcMenuEnum = INTERNAL; // Should not appear in Function type menu
   }
+}
 
-  for (FuncInfoMap::iterator it = itsFuncInfoTable.begin(); it != itsFuncInfoTable.end(); it++)
-    it->second.funcMenuEnum = it->first;
 
-  itsFuncInfoTable[WAVE_SINUS].funcMenuEnum = INTERNAL; // Should not appear in Function type menu
+FmFuncTypeInfo::FmFuncTypeInfo(const char* fn, int ft)
+{
+  listName = fn ? fn : "(noname)";
+  funcType = ft;
+  funcMenuEnum = -1;
 }
 
 
 int FmFuncTypeInfo::getFuncType() const
 {
-  return funcType > FFaTypeCheck::getNewTypeID(NULL) ? FmfUserDefined::getClassTypeID() : funcType;
+  if (funcType > FFaTypeCheck::getNewTypeID(NULL))
+    return FmfUserDefined::getClassTypeID();
+
+  return funcType;
+}
+
+
+void FmFuncAdmin::clearInfoTable()
+{
+  itsFuncInfoTable.clear();
 }
 
 
 const std::vector<int>& FmFuncAdmin::getAllowableSprDmpFuncTypes()
 {
-  if (allowableSprDmpFuncs.empty()) {
-    allowableSprDmpFuncs.push_back(FmfConstant::getClassTypeID());
-    allowableSprDmpFuncs.push_back(FmfScale::getClassTypeID());
-    allowableSprDmpFuncs.push_back(FmfRamp::getClassTypeID());
-    allowableSprDmpFuncs.push_back(FmfLimRamp::getClassTypeID());
-    allowableSprDmpFuncs.push_back(FmfLinVar::getClassTypeID());
-    allowableSprDmpFuncs.push_back(FmfDeviceFunction::getClassTypeID());
-  }
+  static std::vector<int> allowableFuncs = {
+    FmfConstant::getClassTypeID(),
+    FmfScale::getClassTypeID(),
+    FmfRamp::getClassTypeID(),
+    FmfLimRamp::getClassTypeID(),
+    FmfLinVar::getClassTypeID(),
+    FmfDeviceFunction::getClassTypeID()
+  };
 
-  return allowableSprDmpFuncs;
-}
-
-
-bool FmFuncAdmin::isAllowableSprDmpFuncType(int type)
-{
-  const std::vector<int>& ftypes = getAllowableSprDmpFuncTypes();
-  return std::find(ftypes.begin(),ftypes.end(),type) != ftypes.end();
+  return allowableFuncs;
 }
 
 
@@ -129,70 +144,67 @@ void FmFuncAdmin::getCompatibleFunctionTypes(std::vector<FmFuncTypeInfo>& toFill
                                              FmMathFuncBase* compatibleFunc)
 {
   if (itsFuncInfoTable.empty())
-    FmFuncAdmin::init();
+    initFuncInfoTable();
+
+  auto&& isAllowableSprDmpFuncType = [](int type)
+  {
+    const std::vector<int>& ftypes = FmFuncAdmin::getAllowableSprDmpFuncTypes();
+    return std::find(ftypes.begin(),ftypes.end(),type) != ftypes.end();
+  };
 
   toFill.clear();
-  FuncInfoMap::const_iterator it;
 
   if (compatibleFunc)
     switch (compatibleFunc->getFunctionUse())
       {
       case FmMathFuncBase::GENERAL:
-	if (compatibleFunc->getTypeID() == FmfWaveSinus::getClassTypeID()) {
-	  // Internal function with predefined type, don't allow type switching
-	  toFill.push_back(itsFuncInfoTable[FmFuncAdmin::WAVE_SINUS]);
-	  return;
-	}
-	break;
+        // General function, allow all function types,
+        // except for internal ones and wave spectrums
+        if (compatibleFunc->getTypeID() == FmfWaveSinus::getClassTypeID())
+          // Internal function with predefined type, don't allow type switching
+          toFill.push_back(itsFuncInfoTable[FmFuncAdmin::WAVE_SINUS]);
+        else
+          for (const std::pair<const int,FmFuncTypeInfo>& funcInfo : itsFuncInfoTable)
+            if (funcInfo.second.funcMenuEnum > FmFuncAdmin::UNDEFINED &&
+                funcInfo.second.funcMenuEnum != FmFuncAdmin::WAVE_SPECTRUM &&
+                funcInfo.second.funcMenuEnum != FmFuncAdmin::FILE_SPECTRUM)
+              toFill.push_back(funcInfo.second);
+        break;
 
       case FmMathFuncBase::DRIVE_FILE:
 	toFill.push_back(itsFuncInfoTable[FmFuncAdmin::DEVICE]);
-	return;
+	break;
 
       case FmMathFuncBase::NONE:
       case FmMathFuncBase::ROAD_FUNCTION:
       case FmMathFuncBase::CURR_FUNCTION:
-	for (it = itsFuncInfoTable.begin(); it != itsFuncInfoTable.end(); it++)
-	  if (it->second.funcMenuEnum  > FmFuncAdmin::NONE &&
-	      it->second.funcMenuEnum != FmFuncAdmin::WAVE_SPECTRUM &&
-	      it->second.funcMenuEnum != FmFuncAdmin::FILE_SPECTRUM &&
-	      it->second.funcMenuEnum != FmFuncAdmin::REFERENCE)
-	    toFill.push_back(it->second);
-	return;
+        for (const std::pair<const int,FmFuncTypeInfo>& funcInfo : itsFuncInfoTable)
+          if (funcInfo.second.funcMenuEnum  > FmFuncAdmin::NONE &&
+              funcInfo.second.funcMenuEnum != FmFuncAdmin::WAVE_SPECTRUM &&
+              funcInfo.second.funcMenuEnum != FmFuncAdmin::FILE_SPECTRUM &&
+              funcInfo.second.funcMenuEnum != FmFuncAdmin::REFERENCE)
+            toFill.push_back(funcInfo.second);
+        break;
 
       case FmMathFuncBase::WAVE_FUNCTION:
 	toFill.push_back(itsFuncInfoTable[FmFuncAdmin::SINUSOIDAL]);
-	/* Disabled by kmo 17.10.2012. Only to be consistent with documentation.
-	toFill.push_back(itsFuncInfoTable[FmFuncAdmin::COMPL_SINUS]);
-	toFill.push_back(itsFuncInfoTable[FmFuncAdmin::DELAYED_COMPL_SINUS]);
-	*/
 	toFill.push_back(itsFuncInfoTable[FmFuncAdmin::WAVE_SPECTRUM]);
 	toFill.push_back(itsFuncInfoTable[FmFuncAdmin::FILE_SPECTRUM]);
 	// Check if we have user-defined wave functions
-	for (it = itsFuncInfoTable.begin(); it != itsFuncInfoTable.end(); it++)
-	  if (it->first > FmFuncAdmin::USER_HEADING && it->second.funcType > numClassTypes)
-	  {
-	    int fId = it->second.funcType - numClassTypes;
-	    if (FFaUserFuncPlugin::instance()->getFlag(fId) & 4)
-	      toFill.push_back(it->second);
-	  }
-	return;
+        for (const std::pair<const int,FmFuncTypeInfo>& funcInfo : itsFuncInfoTable)
+          if (funcInfo.first > FmFuncAdmin::USER_HEADING &&
+              funcInfo.second.funcType > numClassTypes)
+            if (int fId = funcInfo.second.funcType - numClassTypes;
+                FFaUserFuncPlugin::instance()->getFlag(fId) & 4)
+              toFill.push_back(funcInfo.second);
+        break;
 
       default: // Stiffness or Damper function
-	for (it = itsFuncInfoTable.begin(); it != itsFuncInfoTable.end(); it++)
-	  if (isAllowableSprDmpFuncType(it->second.funcType))
-	    if (it->first != FmFuncAdmin::FILE_SPECTRUM)
-	      toFill.push_back(it->second);
-	return;
+        for (const std::pair<const int,FmFuncTypeInfo>& funcInfo : itsFuncInfoTable)
+          if (isAllowableSprDmpFuncType(funcInfo.second.funcType))
+            if (funcInfo.first != FmFuncAdmin::FILE_SPECTRUM)
+              toFill.push_back(funcInfo.second);
       }
-
-  // General function, allow all function types,
-  // except for internal ones and wave spectrums
-  for (it = itsFuncInfoTable.begin(); it != itsFuncInfoTable.end(); it++)
-    if (it->second.funcMenuEnum > FmFuncAdmin::UNDEFINED &&
-	it->second.funcMenuEnum != FmFuncAdmin::WAVE_SPECTRUM &&
-	it->second.funcMenuEnum != FmFuncAdmin::FILE_SPECTRUM)
-      toFill.push_back(it->second);
 }
 
 
